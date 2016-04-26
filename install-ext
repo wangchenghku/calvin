@@ -6,18 +6,19 @@ mkdir ext
 cd ext
 
 #zookeeper
-wget http://apache.mirrors.tds.net/zookeeper/current/zookeeper-3.4.6.tar.gz
-tar xzf zookeeper-3.4.6.tar.gz
-rm zookeeper-3.4.6.tar.gz
-mv zookeeper-3.4.6/src/c zookeeper
-rm -fr zookeeper-3.4.6
+wget http://apache.mirrors.tds.net/zookeeper/current/zookeeper-3.4.8.tar.gz
+tar xzf zookeeper-3.4.8.tar.gz
+rm zookeeper-3.4.8.tar.gz
+mv zookeeper-3.4.8/src/c zookeeper
+rm -fr zookeeper-3.4.8
 cd zookeeper
 ./configure --prefix=$PWD
 make -j
 cd ..
 
 # protobuf
-svn checkout http://protobuf.googlecode.com/svn/trunk/ protobuf
+# svn checkout http://protobuf.googlecode.com/svn/trunk/ protobuf
+git clone https://github.com/google/protobuf.git
 cd protobuf
 ./autogen.sh
 ./configure --prefix=$PWD
