@@ -50,7 +50,7 @@ Installation
   In order to compile external libraries associated w/Calvin, please run: 
     $ ./install-ext
   To compile the source, please run:
-    $ mv src_*** src
+    $ mv src_calvin src
     $ cd src
     $ make -j
   Two directories will be created: bin/, obj/ and logs/.
