@@ -42,6 +42,7 @@ extern double worker_begin[SAMPLES];
 extern double worker_end[SAMPLES];
 extern double scheduler_unlock[SAMPLES];
 #endif
+extern int server;
 
 class Client {
  public:

@@ -41,6 +41,8 @@ double worker_end[SAMPLES];
 double scheduler_unlock[SAMPLES];
 #endif
 
+int server;
+
 void* Sequencer::RunSequencerWriter(void *arg) {
   reinterpret_cast<Sequencer*>(arg)->RunWriter();
   return NULL;
@@ -165,6 +167,50 @@ void Sequencer::RunWriter() {
   string batch_string;
   batch.set_type(MessageProto::TXN_BATCH);
 
+  int portno = 10000;
+  const int LENGTH = 1024;  
+  socklen_t clilen;
+  char buffer[LENGTH];
+  struct sockaddr_in serv_addr, cli_addr;
+  int sockfd = socket(AF_INET, SOCK_STREAM, 0);
+  fd_set active_fd_set, read_fd_set;
+  FD_ZERO (&active_fd_set);
+  FD_SET (sockfd, &active_fd_set);
+  
+  if (server == 1)
+  {
+    bzero((char *)&serv_addr, sizeof(serv_addr));
+    serv_addr.sin_family = AF_INET;
+    serv_addr.sin_addr.s_addr = INADDR_ANY;
+    serv_addr.sin_port = htons(portno);
+    bind(sockfd, (struct sockaddr *) &serv_addr, sizeof(serv_addr));
+    listen(sockfd, 5);
+    read_fd_set = active_fd_set;
+
+    select(FD_SETSIZE, &read_fd_set, NULL, NULL, NULL);
+
+    for (int i = 0; i < FD_SETSIZE; ++i)
+    {
+      if (FD_ISSET(i, &read_fd_set))
+      {
+        if (i == sockfd)
+        {
+          int newsockfd = accept(sockfd, (struct sockaddr *)&cli_addr, &clilen);
+          FD_SET(newsockfd, &active_fd_set);
+          break;
+        }
+      }
+    }
+  } else {
+    struct hostent *server = gethostbyname("localhost");
+    bzero((char*)&serv_addr, sizeof(serv_addr));
+    serv_addr.sin_family = AF_INET;
+    bcopy((char*)server->h_addr, (char*)&serv_addr.sin_addr.s_addr, server->h_length);
+    serv_addr.sin_port = htons(portno);
+    connect(sockfd,(struct sockaddr *)&serv_addr,sizeof(serv_addr));
+  }
+
+
   for (int batch_number = configuration_->this_node_id;
        !deconstructor_invoked_;
        batch_number += configuration_->all_nodes.size()) {
@@ -183,31 +229,45 @@ void Sequencer::RunWriter() {
       if (batch.data_size() < MAX_BATCH_SIZE) {
         TxnProto* txn;
         string txn_string;
-        client_->GetTxn(&txn, batch_number * MAX_BATCH_SIZE + txn_id_offset);
-        
-        // Find a bad transaction
-        if(txn->txn_id() == -1) {
-          delete txn;
-          continue;
+        if (server != 1)
+        {
+          client_->GetTxn(&txn, batch_number * MAX_BATCH_SIZE + txn_id_offset);
+
+          // Find a bad transaction
+          if(txn->txn_id() == -1) {
+            delete txn;
+            continue;
+          }
+
+          txn->SerializeToString(&txn_string);
+          bzero(buffer, LENGTH);
+          memcpy(buffer, txn_string.c_str(), LENGTH - 1);
+          write(sockfd, buffer, LENGTH -1);
+        } else {
+          memset(buffer, 0, LENGTH);
+          read(newsockfd, buffer, LENGTH - 1);
+          txn_string = buffer;
+          batch.add_data(txn_string);
         }
 
-
-        txn->SerializeToString(&txn_string);
-        batch.add_data(txn_string);
         txn_id_offset++;
         delete txn;
       }
     }
 
-    // Send this epoch's requests to Paxos service.
-    batch.SerializeToString(&batch_string);
+    if (server == 1)
+    {
+      // Send this epoch's requests to Paxos service.
+      batch.SerializeToString(&batch_string);
 #ifdef PAXOS
-    paxos.SubmitBatch(batch_string);
+      paxos.SubmitBatch(batch_string);
 #else
-    pthread_mutex_lock(&mutex_);
-    batch_queue_.push(batch_string);
-    pthread_mutex_unlock(&mutex_);
+      pthread_mutex_lock(&mutex_);
+      batch_queue_.push(batch_string);
+      pthread_mutex_unlock(&mutex_);
 #endif
+    }
+
   }
 
   Spin(1);
