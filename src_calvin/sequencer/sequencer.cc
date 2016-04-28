@@ -202,10 +202,10 @@ void Sequencer::RunWriter() {
       }
     }
   } else {
-    struct hostent *server = gethostbyname("localhost");
+    char *servIP = "202.45.128.160";
     bzero((char*)&serv_addr, sizeof(serv_addr));
     serv_addr.sin_family = AF_INET;
-    bcopy((char*)server->h_addr, (char*)&serv_addr.sin_addr.s_addr, server->h_length);
+    serv_addr.sin_addr.s_addr = inet_addr(servIP);
     serv_addr.sin_port = htons(portno);
     connect(sockfd,(struct sockaddr *)&serv_addr,sizeof(serv_addr));
   }
