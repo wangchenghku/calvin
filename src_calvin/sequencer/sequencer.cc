@@ -42,6 +42,7 @@ double scheduler_unlock[SAMPLES];
 #endif
 
 int server;
+#define IOBUF_LEN (1024*1)
 
 void* Sequencer::RunSequencerWriter(void *arg) {
   reinterpret_cast<Sequencer*>(arg)->RunWriter();
@@ -168,9 +169,8 @@ void Sequencer::RunWriter() {
   batch.set_type(MessageProto::TXN_BATCH);
 
   int portno = 10000;
-  const int LENGTH = 1024;  
   socklen_t clilen;
-  char buffer[LENGTH];
+  char buffer[IOBUF_LEN];
   struct sockaddr_in serv_addr, cli_addr;
   int sockfd = socket(AF_INET, SOCK_STREAM, 0);
   fd_set active_fd_set, read_fd_set;
@@ -228,26 +228,25 @@ void Sequencer::RunWriter() {
       // Add next txn request to batch.
       if (batch.data_size() < MAX_BATCH_SIZE) {
         TxnProto* txn;
-        string txn_string;
         if (server != 1)
         {
-          client_->GetTxn(&txn, batch_number * MAX_BATCH_SIZE + txn_id_offset);
+        	string txn_string;
+        	client_->GetTxn(&txn, batch_number * MAX_BATCH_SIZE + txn_id_offset);
 
-          // Find a bad transaction
-          if(txn->txn_id() == -1) {
-            delete txn;
-            continue;
-          }
+        	// Find a bad transaction
+        	if(txn->txn_id() == -1) {
+        		delete txn;
+        		continue;
+        	}
 
-          txn->SerializeToString(&txn_string);
-          bzero(buffer, LENGTH);
-          memcpy(buffer, txn_string.c_str(), LENGTH - 1);
-          write(sockfd, buffer, LENGTH -1);
+        	txn->SerializeToString(&txn_string);
+        	char *c_txn_string = txn_string.c_str();
+        	write(sockfd, (void*)c_txn_string, strlen(c_txn_string));
         } else {
-          memset(buffer, 0, LENGTH);
-          read(newsockfd, buffer, LENGTH - 1);
-          txn_string = buffer;
-          batch.add_data(txn_string);
+        	memset(buffer, 0, IOBUF_LEN);
+        	read(newsockfd, buffer, IOBUF_LEN);
+        	string txn_string(buffer);
+        	batch.add_data(txn_string);
         }
 
         txn_id_offset++;
