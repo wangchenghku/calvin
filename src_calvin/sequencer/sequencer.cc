@@ -43,6 +43,7 @@ double scheduler_unlock[SAMPLES];
 
 int server;
 #define IOBUF_LEN (1024*1)
+#define PORT_NO 10000
 
 void* Sequencer::RunSequencerWriter(void *arg) {
   reinterpret_cast<Sequencer*>(arg)->RunWriter();
@@ -168,7 +169,6 @@ void Sequencer::RunWriter() {
   string batch_string;
   batch.set_type(MessageProto::TXN_BATCH);
 
-  int portno = 10000;
   socklen_t clilen;
   char buffer[IOBUF_LEN];
   struct sockaddr_in serv_addr, cli_addr;
@@ -182,7 +182,7 @@ void Sequencer::RunWriter() {
     bzero((char *)&serv_addr, sizeof(serv_addr));
     serv_addr.sin_family = AF_INET;
     serv_addr.sin_addr.s_addr = INADDR_ANY;
-    serv_addr.sin_port = htons(portno);
+    serv_addr.sin_port = htons(PORT_NO);
     bind(sockfd, (struct sockaddr *) &serv_addr, sizeof(serv_addr));
     listen(sockfd, 5);
     read_fd_set = active_fd_set;
@@ -206,7 +206,7 @@ void Sequencer::RunWriter() {
     bzero((char*)&serv_addr, sizeof(serv_addr));
     serv_addr.sin_family = AF_INET;
     serv_addr.sin_addr.s_addr = inet_addr(servIP);
-    serv_addr.sin_port = htons(portno);
+    serv_addr.sin_port = htons(PORT_NO);
     connect(sockfd,(struct sockaddr *)&serv_addr,sizeof(serv_addr));
   }
 
