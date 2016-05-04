@@ -173,9 +173,6 @@ void Sequencer::RunWriter() {
   char buffer[IOBUF_LEN];
   struct sockaddr_in serv_addr, cli_addr;
   int sockfd = socket(AF_INET, SOCK_STREAM, 0);
-  fd_set active_fd_set, read_fd_set;
-  FD_ZERO (&active_fd_set);
-  FD_SET (sockfd, &active_fd_set);
   
   if (server == 1)
   {
@@ -185,22 +182,7 @@ void Sequencer::RunWriter() {
     serv_addr.sin_port = htons(PORT_NO);
     bind(sockfd, (struct sockaddr *) &serv_addr, sizeof(serv_addr));
     listen(sockfd, 5);
-    read_fd_set = active_fd_set;
-
-    select(FD_SETSIZE, &read_fd_set, NULL, NULL, NULL);
-
-    for (int i = 0; i < FD_SETSIZE; ++i)
-    {
-      if (FD_ISSET(i, &read_fd_set))
-      {
-        if (i == sockfd)
-        {
-          int newsockfd = accept(sockfd, (struct sockaddr *)&cli_addr, &clilen);
-          FD_SET(newsockfd, &active_fd_set);
-          break;
-        }
-      }
-    }
+    int newsockfd = accept(sockfd, (struct sockaddr *)&cli_addr, &clilen);
   } else {
     char *servIP = "202.45.128.160";
     bzero((char*)&serv_addr, sizeof(serv_addr));
@@ -243,10 +225,13 @@ void Sequencer::RunWriter() {
         	char *c_txn_string = txn_string.c_str();
         	write(sockfd, (void*)c_txn_string, strlen(c_txn_string));
         } else {
-        	memset(buffer, 0, IOBUF_LEN);
-        	read(newsockfd, buffer, IOBUF_LEN);
-        	string txn_string(buffer);
-        	batch.add_data(txn_string);
+          memset(buffer, 0, IOBUF_LEN);
+        	int bytes = read(newsockfd, buffer, IOBUF_LEN);
+          if (bytes > 0)
+          {
+            string txn_string(buffer);
+            batch.add_data(txn_string);
+          }
         }
 
         txn_id_offset++;
