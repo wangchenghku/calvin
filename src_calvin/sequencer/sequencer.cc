@@ -229,7 +229,7 @@ void Sequencer::RunWriter() {
 
         	txn->SerializeToString(&txn_string);
         	const char *c_txn_string = txn_string.c_str();
-        	write(sockfd, (void*)c_txn_string, strlen(c_txn_string));
+        	write(sockfd, (void*)c_txn_string, IOBUF_LEN);
 
           txn_id_offset++;
           delete txn;
