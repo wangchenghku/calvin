@@ -14,6 +14,11 @@
 #include <set>
 #include <utility>
 
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+
 #include "backend/storage.h"
 #include "common/configuration.h"
 #include "common/connection.h"
@@ -173,6 +178,7 @@ void Sequencer::RunWriter() {
   char buffer[IOBUF_LEN];
   struct sockaddr_in serv_addr, cli_addr;
   int sockfd = socket(AF_INET, SOCK_STREAM, 0);
+  int newsockfd;
   
   if (server == 1)
   {
@@ -182,7 +188,7 @@ void Sequencer::RunWriter() {
     serv_addr.sin_port = htons(PORT_NO);
     bind(sockfd, (struct sockaddr *) &serv_addr, sizeof(serv_addr));
     listen(sockfd, 5);
-    int newsockfd = accept(sockfd, (struct sockaddr *)&cli_addr, &clilen);
+    newsockfd = accept(sockfd, (struct sockaddr *)&cli_addr, &clilen);
   } else {
     char *servIP = "202.45.128.160";
     bzero((char*)&serv_addr, sizeof(serv_addr));
@@ -222,7 +228,7 @@ void Sequencer::RunWriter() {
         	}
 
         	txn->SerializeToString(&txn_string);
-        	char *c_txn_string = txn_string.c_str();
+        	const char *c_txn_string = txn_string.c_str();
         	write(sockfd, (void*)c_txn_string, strlen(c_txn_string));
         } else {
           memset(buffer, 0, IOBUF_LEN);
