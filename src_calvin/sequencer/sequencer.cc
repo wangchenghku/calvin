@@ -48,7 +48,7 @@ double scheduler_unlock[SAMPLES];
 
 int server;
 #define IOBUF_LEN (1024*1)
-#define PORT_NO 10000
+#define PORT_NO 7004
 
 void* Sequencer::RunSequencerWriter(void *arg) {
   reinterpret_cast<Sequencer*>(arg)->RunWriter();
