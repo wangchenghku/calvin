@@ -229,7 +229,7 @@ void Sequencer::RunWriter() {
 
         	txn->SerializeToString(&txn_string);
         	const char *c_txn_string = txn_string.c_str();
-        	write(sockfd, (void*)c_txn_string, IOBUF_LEN);
+        	write(sockfd, (void*)c_txn_string, txn_string.length());
 
           txn_id_offset++;
           delete txn;
@@ -238,7 +238,7 @@ void Sequencer::RunWriter() {
         	int bytes = read(newsockfd, buffer, IOBUF_LEN);
           if (bytes > 0)
           {
-            string txn_string(buffer);
+            string txn_string(buffer); // FIXME: we need to read one transaction only in each read
             batch.add_data(txn_string);
           }
         }
