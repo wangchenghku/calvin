@@ -47,7 +47,7 @@ double scheduler_unlock[SAMPLES];
 #endif
 
 int server;
-#define IOBUF_LEN (1024*1)
+#define IOBUF_LEN 128
 #define PORT_NO 7004
 
 void* Sequencer::RunSequencerWriter(void *arg) {
@@ -229,7 +229,10 @@ void Sequencer::RunWriter() {
 
         	txn->SerializeToString(&txn_string);
         	const char *c_txn_string = txn_string.c_str();
-        	write(sockfd, (void*)c_txn_string, txn_string.length());
+          memset(buffer, 0, IOBUF_LEN);
+          memcpy(buffer, c_txn_string, txn_string.length());
+
+        	write(sockfd, buffer, IOBUF_LEN);
 
           txn_id_offset++;
           delete txn;
