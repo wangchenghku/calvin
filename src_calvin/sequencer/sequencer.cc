@@ -218,22 +218,22 @@ void Sequencer::RunWriter() {
         TxnProto* txn;
         if (server != 1)
         {
-        	string txn_string;
-        	client_->GetTxn(&txn, batch_number * MAX_BATCH_SIZE + txn_id_offset);
-
-        	// Find a bad transaction
-        	if(txn->txn_id() == -1) {
-        		delete txn;
-        		continue;
-        	}
-
-        	txn->SerializeToString(&txn_string);
-        	const char *c_txn_string = txn_string.c_str();
-        	memset(buffer, 0, IOBUF_LEN);
-        	memcpy(buffer, c_txn_string, txn_string.length());
-
-        	write(sockfd, buffer, IOBUF_LEN);
-
+          string txn_string;
+          client_->GetTxn(&txn, batch_number * MAX_BATCH_SIZE + txn_id_offset);
+          
+          // Find a bad transaction
+          if(txn->txn_id() == -1) {
+            delete txn;
+            continue;
+          }
+          
+          txn->SerializeToString(&txn_string);
+          const char *c_txn_string = txn_string.c_str();
+          memset(buffer, 0, IOBUF_LEN);
+          memcpy(buffer, c_txn_string, txn_string.length());
+          
+          write(sockfd, buffer, IOBUF_LEN);
+          
           txn_id_offset++;
           delete txn;
         } else {
