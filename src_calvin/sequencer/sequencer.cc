@@ -229,8 +229,8 @@ void Sequencer::RunWriter() {
 
         	txn->SerializeToString(&txn_string);
         	const char *c_txn_string = txn_string.c_str();
-          memset(buffer, 0, IOBUF_LEN);
-          memcpy(buffer, c_txn_string, txn_string.length());
+        	memset(buffer, 0, IOBUF_LEN);
+        	memcpy(buffer, c_txn_string, txn_string.length());
 
         	write(sockfd, buffer, IOBUF_LEN);
 
