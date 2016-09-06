@@ -238,7 +238,7 @@ void Sequencer::RunWriter() {
           delete txn;
         } else {
           memset(buffer, 0, IOBUF_LEN);
-        	int bytes = read(newsockfd, buffer, IOBUF_LEN);
+          int bytes = read(newsockfd, buffer, IOBUF_LEN);
           if (bytes > 0)
           {
             string txn_string(buffer); // FIXME: we need to read one transaction only in each read
