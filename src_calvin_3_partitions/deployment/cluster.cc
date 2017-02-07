@@ -209,6 +209,8 @@ void DeployOne(int nodeID,
            "scp -rp deploy-run.conf %s:db3/deploy-run.conf",
            node->host.c_str());
   system(copy_config);
+  // system() executes a command specified in command by calling /bin/sh -c command
+  // and returns after the command has been completed.
 
   char remote_opt3[1024];
   if (do_valgrind)
