@@ -35,8 +35,6 @@ class Storage;
 class TxnProto;
 
 #define NUM_THREADS 4
-// a pool of transaction execution threads
-
 // #define PREFETCHING
 
 class DeterministicScheduler : public Scheduler {

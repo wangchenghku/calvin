@@ -50,7 +50,7 @@ Installation
   In order to compile external libraries associated w/Calvin, please run: 
     $ ./install-ext
   To compile the source, please run:
-    $ mv src_calvin src
+    $ mv src_*** src
     $ cd src
     $ make -j
   Two directories will be created: bin/, obj/ and logs/.
@@ -64,7 +64,7 @@ Installation
     $ bin/deployment/cluster -c deploy-run.conf -p src/deployment/portfile -d bin/deployment/db m 0
 
    If you only run it on one machine, just run the command from the root directory:
-   $ env LD_LIBRARY_PATH=.:$LD_LIBRARY_PATH  bin/deployment/db 0 m 0 s
+   $ bin/deployment/db 0 m 0
 
   Note that: Since all experiments we did before were ran on 8 cores machines, current codebase only can be running on 8 cores machines, we will make it more general in the future. If you want to run it on multiple machines, you should make sure each machine has the same user name and each machine is able to ssh the other machines without password, like "ssh 128.26.232.18". Also you need to make sure each machine has the exactly same code, and you should build the same code on each machine.
 

@@ -114,19 +114,17 @@ void stop(int sig) {
 
 int main(int argc, char** argv) {
   // TODO(alex): Better arg checking.
-  if (argc < 5) {
-    fprintf(stderr, "Usage: %s <node-id> <m[icro]|t[pcc]> <percent_mp> <s[erver]|c[lient]>\n",
+  if (argc < 4) {
+    fprintf(stderr, "Usage: %s <node-id> <m[icro]|t[pcc]> <percent_mp>\n",
             argv[0]);
     exit(1);
   }
   bool useFetching = false;
-  if (argc > 5 && argv[5][0] == 'f')
+  if (argc > 4 && argv[4][0] == 'f')
     useFetching = true;
   // Catch ^C and kill signals and exit gracefully (for profiling).
   signal(SIGINT, &stop);
   signal(SIGTERM, &stop);
-
-  server = argv[4][0] == 's' ? 1 : 0;
 
   // Build this node's configuration object.
   Configuration config(StringToInt(argv[1]), "deploy-run.conf");

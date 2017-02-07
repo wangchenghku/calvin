@@ -11,9 +11,7 @@
 #include <string>
 #include <queue>
 
-#define PAXOS
-// Paxos service
-
+//#define PAXOS
 //#define PREFETCHING
 #define COLD_CUTOFF 990000
 
@@ -44,7 +42,6 @@ extern double worker_begin[SAMPLES];
 extern double worker_end[SAMPLES];
 extern double scheduler_unlock[SAMPLES];
 #endif
-extern int server;
 
 class Client {
  public:

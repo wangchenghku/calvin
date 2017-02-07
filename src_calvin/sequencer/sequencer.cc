@@ -14,11 +14,6 @@
 #include <set>
 #include <utility>
 
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-
 #include "backend/storage.h"
 #include "common/configuration.h"
 #include "common/connection.h"
@@ -45,10 +40,6 @@ double worker_begin[SAMPLES];
 double worker_end[SAMPLES];
 double scheduler_unlock[SAMPLES];
 #endif
-
-int server;
-#define IOBUF_LEN 128
-#define PORT_NO 7004
 
 void* Sequencer::RunSequencerWriter(void *arg) {
   reinterpret_cast<Sequencer*>(arg)->RunWriter();
@@ -174,31 +165,6 @@ void Sequencer::RunWriter() {
   string batch_string;
   batch.set_type(MessageProto::TXN_BATCH);
 
-  socklen_t clilen;
-  char buffer[IOBUF_LEN];
-  struct sockaddr_in serv_addr, cli_addr;
-  int sockfd = socket(AF_INET, SOCK_STREAM, 0);
-  int newsockfd;
-  
-  if (server == 1)
-  {
-    bzero((char *)&serv_addr, sizeof(serv_addr));
-    serv_addr.sin_family = AF_INET;
-    serv_addr.sin_addr.s_addr = INADDR_ANY;
-    serv_addr.sin_port = htons(PORT_NO);
-    bind(sockfd, (struct sockaddr *) &serv_addr, sizeof(serv_addr));
-    listen(sockfd, 5);
-    newsockfd = accept(sockfd, (struct sockaddr *)&cli_addr, &clilen);
-  } else {
-    char *servIP = "202.45.128.160";
-    bzero((char*)&serv_addr, sizeof(serv_addr));
-    serv_addr.sin_family = AF_INET;
-    serv_addr.sin_addr.s_addr = inet_addr(servIP);
-    serv_addr.sin_port = htons(PORT_NO);
-    connect(sockfd,(struct sockaddr *)&serv_addr,sizeof(serv_addr));
-  }
-
-
   for (int batch_number = configuration_->this_node_id;
        !deconstructor_invoked_;
        batch_number += configuration_->all_nodes.size()) {
@@ -216,52 +182,32 @@ void Sequencer::RunWriter() {
       // Add next txn request to batch.
       if (batch.data_size() < MAX_BATCH_SIZE) {
         TxnProto* txn;
-        if (server != 1)
-        {
-          string txn_string;
-          client_->GetTxn(&txn, batch_number * MAX_BATCH_SIZE + txn_id_offset);
-          
-          // Find a bad transaction
-          if(txn->txn_id() == -1) {
-            delete txn;
-            continue;
-          }
-          
-          txn->SerializeToString(&txn_string);
-          const char *c_txn_string = txn_string.c_str();
-          memset(buffer, 0, IOBUF_LEN);
-          memcpy(buffer, c_txn_string, txn_string.length());
-          
-          write(sockfd, buffer, IOBUF_LEN);
-          
-          txn_id_offset++;
+        string txn_string;
+        client_->GetTxn(&txn, batch_number * MAX_BATCH_SIZE + txn_id_offset);
+        
+        // Find a bad transaction
+        if(txn->txn_id() == -1) {
           delete txn;
-        } else {
-          memset(buffer, 0, IOBUF_LEN);
-          int bytes = read(newsockfd, buffer, IOBUF_LEN);
-          if (bytes > 0)
-          {
-            string txn_string(buffer); // FIXME: we need to read one transaction only in each read
-            batch.add_data(txn_string);
-          }
+          continue;
         }
 
+
+        txn->SerializeToString(&txn_string);
+        batch.add_data(txn_string);
+        txn_id_offset++;
+        delete txn;
       }
     }
 
-    if (server == 1)
-    {
-      // Send this epoch's requests to Paxos service.
-      batch.SerializeToString(&batch_string);
+    // Send this epoch's requests to Paxos service.
+    batch.SerializeToString(&batch_string);
 #ifdef PAXOS
-      paxos.SubmitBatch(batch_string);
+    paxos.SubmitBatch(batch_string);
 #else
-      pthread_mutex_lock(&mutex_);
-      batch_queue_.push(batch_string);
-      pthread_mutex_unlock(&mutex_);
+    pthread_mutex_lock(&mutex_);
+    batch_queue_.push(batch_string);
+    pthread_mutex_unlock(&mutex_);
 #endif
-    }
-
   }
 
   Spin(1);
