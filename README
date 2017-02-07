@@ -43,9 +43,20 @@ Installation
   run calvin_ctl (the executable for launching Calvin), you would invoke from
   the root directory:
     $ bin/deployment/cluster -c deploy-run.conf -p src/deployment/portfile -d bin/deployment/db m 0
+    # bin/deployment/cluster -c config-file -p port-file -d db-exec
+
+  deploy-run.conf:
+  # Node<id>=<replica>:<partition>:<cores>:<host>:<port>
+  node0=0:0:8:128.36.232.18:54564
+  node1=0:1:8:128.36.232.12:54564
+  node2=0:2:8:128.36.232.15:54564
+  node3=0:3:8:128.36.232.20:54564
+  node4=0:4:8:128.36.232.19:54564
+  ...
 
    If you only run it on one machine, just run the command from the root directory:
    $ bin/deployment/db 0 m 0
+   # bin/deployment/db <node-id> <m[icro]|t[pcc]> <percent_mp>
 
   Note that: Since all experiments we did before were ran on 8 cores machines, current codebase only can be running on 8 cores machines, we will make it more general in the future. If you want to run it on multiple machines, you should make sure each machine has the same user name and each machine is able to ssh the other machines without password, like "ssh 128.26.232.18". Also you need to make sure each machine has the exactly same code, and you should build the same code on each machine.
 
