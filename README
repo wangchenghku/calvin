@@ -1,4 +1,12 @@
 
+Synchronous and asynchronous replication
+Calvin currently supports two modes for replicating transactional input: asynchronous replication and Paxos-based synchronous replication. In both modes, nodes are origanized into replication groups, each of which contains all replicas of a particular partition. For example, partition 1 in replica A and partition 1 in replica B would together form one replication group.
+In asynchronous replication mode, one replica is designated as a master replica, and all transaction requests are forwarded immediately to sequncer located at nodes of this replica. After compiling each batch, the sequencer component on each master node forwards the batch to all other (slave) sequencers in its replication group.
+
+Calvin also supports Paxos-based synchronous replication of transactional inputs. In this mode, all sequencers within a replication group use Paxos to agree on a combined batch of transaction requrests for each epoch. Calvin's current implementation uses ZooKeeper, a highly reliable distributed coordination service often used by distributed database systems for heartbeats, configuration synchronization and naming.
+
+In its current implementation, Calvin handles hardware failures by recovering the crashed machine from its most recent complete snapshot and then replaying all more recent transactions. Since other nodes within the same replica may depend on remote reads from the afflicted machine, however, throughput in the rest of the replica is opt to slow or halt until recovery is complete.
+
 Prerequisites
   - GNU/Linux distro >= 2.6.37.6
   - G++ >= 4.5.1
